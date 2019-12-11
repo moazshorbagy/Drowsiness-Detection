@@ -58,11 +58,10 @@ while True:
     y=ycbcr[:,:,0]
     cb=ycbcr[:,:,1]
     cr=ycbcr[:,:,2]
-    mask3=np.bitwise_and.reduce((cb>=60,cr<=130))
+    mask3=np.bitwise_and.reduce((cb>=60,cb<=130,cr>=130,cr<=165))
 
 
     # final Mask
-
     mask=np.bitwise_and.reduce((mask1,mask2,mask3))
     ycbcr[np.invert(mask)]=0
 
