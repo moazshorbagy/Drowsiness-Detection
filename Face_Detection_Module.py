@@ -56,8 +56,8 @@ while True:
 
     # Rule C
     y=ycbcr[:,:,0]
-    cb=ycbcr[:,:,1]
-    cr=ycbcr[:,:,2]
+    cr=ycbcr[:,:,1]
+    cb=ycbcr[:,:,2]
     mask3=np.bitwise_and.reduce((cb>=60,cb<=130,cr>=130,cr<=165))
 
 
