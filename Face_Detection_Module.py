@@ -39,7 +39,7 @@ while True:
     red=rgb[:,:,0]
     green=rgb[:,:,1]
     blue=rgb[:,:,2]
-    idx1=np.bitwise_and.reduce((red>50,green>40,blue>20,\
+    idx1=np.bitwise_and.reduce((red>95,green>40,blue>20,\
         (np.maximum.reduce((red,green,blue))-np.minimum.reduce((red,green,blue)))>=10\
          ,np.abs(red-green)>=10,red>green,red>blue))
 
@@ -51,14 +51,14 @@ while True:
     h=hsv[:,:,0]
     s=hsv[:,:,1]
     v=hsv[:,:,2]
-    mask2 = np.bitwise_and.reduce((h>=0,h<=50,s>=26,s<=230))
+    mask2 = np.bitwise_and.reduce((h>=0,h<=50,s>=59,s<=174))
 
 
     # Rule C
     y=ycbcr[:,:,0]
     cr=ycbcr[:,:,1]
     cb=ycbcr[:,:,2]
-    mask3=np.bitwise_and.reduce((cb>=60,cb<=130,cr>=130,cr<=165))
+    mask3=np.bitwise_and.reduce((cb>=77,cb<=127,cr>=133,cr<=173))
 
 
     # final Mask
