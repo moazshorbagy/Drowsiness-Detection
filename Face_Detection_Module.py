@@ -41,7 +41,7 @@ while True:
     blue=rgb[:,:,2]
     idx1=np.bitwise_and.reduce((red>50,green>40,blue>20,\
         (np.maximum.reduce((red,green,blue))-np.minimum.reduce((red,green,blue)))>=10\
-         ,red-green>=10,red>green,red>blue))
+         ,np.abs(red-green)>=10,red>green,red>blue))
 
     idx2=np.bitwise_and.reduce((red>220,green>210,blue>170,red>blue,green>blue,np.abs(red-green)<=15))
     mask1=np.bitwise_or(idx1,idx2)
