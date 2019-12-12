@@ -14,9 +14,10 @@ class App:
 
         self.window.resizable(0,0)
 
-        self.canvas = tkinter.Canvas(self.window, width = 720, height = 640)
+        self.canvas = tkinter.Canvas(self.window, width = 720, height = 640, bg="white")
         self.canvas.pack()
 
+        ## Toolbar and brightness control buttons
         self.vid_canvas = None
         self.toolBarCanvas = None
         self.brightnessLevel = 0
