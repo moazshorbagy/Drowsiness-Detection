@@ -55,11 +55,13 @@ for (x, y, w, h) in faces:
     
     EyeMap = EyeMapC * EyeMapL
 
-    EyeMapD = cv2.dilate(EyeMap, se, iterations = 3)
-    EyeMapD = cv2.erode(EyeMapD, se, iterations = 3)
-    EyeMapD[EyeMapD >= 0.5] = 1.0
-    EyeMapD[EyeMapD < 0.5] = 0.0
-    EyeMapD = cv2.dilate(EyeMapD, se, iterations = 2)
+    EyeMapD = cv2.dilate(EyeMap, se, iterations = 1)
+    #EyeMapD = cv2.erode(EyeMapD, se, iterations = 3)
+
+    EyeMapDMin = np.min(EyeMapD)
+    EyeMapD = (EyeMapD - EyeMapDMin) / (np.max(EyeMapD) - EyeMapDMin)
+
+    EyeMapD[EyeMapD < 0.25] = 0.0
 
     #threshold = 0.7 * np.max(EyeMap)
     #while True:
