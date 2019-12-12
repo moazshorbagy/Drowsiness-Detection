@@ -30,7 +30,7 @@ def getEyes(img, filter):
 
 while True:
     ret, frame = cap.read()
-    frame = cv2.GaussianBlur(frame, (21, 21), cv2.BORDER_DEFAULT)
+    frame = cv2.GaussianBlur(frame, (9, 9), cv2.BORDER_DEFAULT)
     ycbcr = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
     hsv=cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
     rgb=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
@@ -39,30 +39,28 @@ while True:
     red=rgb[:,:,0]
     green=rgb[:,:,1]
     blue=rgb[:,:,2]
-    idx1=np.bitwise_and.reduce((red>95,green>40,blue>20,\
+    idx1=np.logical_and.reduce((red>50,green>40,blue>20,\
         (np.maximum.reduce((red,green,blue))-np.minimum.reduce((red,green,blue)))>=10\
          ,np.abs(red-green)>=10,red>green,red>blue))
 
-    idx2=np.bitwise_and.reduce((red>220,green>210,blue>170,red>blue,green>blue,np.abs(red-green)<=15))
-    mask1=np.bitwise_or(idx1,idx2)
+    idx2=np.logical_and.reduce((red>220,green>210,blue>170,red>blue,green>blue,np.abs(red-green)<=15))
+    mask1=np.logical_or(idx1,idx2)
 
 
     # Rule B
     h=hsv[:,:,0]
     s=hsv[:,:,1]
-    v=hsv[:,:,2]
-    mask2 = np.bitwise_and.reduce((h>=0,h<=50,s>=59,s<=174))
+    mask2 = np.logical_and.reduce((h>=0,h<=50,s>=25,s<=230))
 
 
     # Rule C
     y=ycbcr[:,:,0]
     cr=ycbcr[:,:,1]
     cb=ycbcr[:,:,2]
-    mask3=np.bitwise_and.reduce((cb>=77,cb<=127,cr>=133,cr<=173))
-
+    mask3=np.logical_and.reduce((cb>=60,cb<=130,cr>=130,cr<=165))
 
     # final Mask
-    mask=np.bitwise_and.reduce((mask1,mask2,mask3))
+    mask=np.logical_and.reduce((mask1,mask2,mask3))
     ycbcr[np.invert(mask)]=0
 
 
