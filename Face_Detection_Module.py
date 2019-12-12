@@ -30,7 +30,7 @@ def getEyes(img, filter):
 
 while True:
     ret, frame = cap.read()
-
+    frame = cv2.GaussianBlur(frame, (21, 21), cv2.BORDER_DEFAULT)
     ycbcr = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
     hsv=cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
     rgb=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
@@ -74,6 +74,19 @@ while True:
     contours, hierarchy = cv2.findContours(edged, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(frame, contours, -1, (0,255,0), 1)
     cs = np.array(contours[0])
+
+    if(len(contours)):
+            index = 0
+            max_c = contours[0].shape[0]
+            for i in range(len(contours)):
+                if(max_c < contours[i].shape[0]):
+                    index = i
+                    max_c = contours[i].shape[0]
+
+            contours = [contours[index]]
+
+            x, y, w, h = cv2.boundingRect(contours[0])
+            frame = cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     # eyes = getEyes(filter, filter)
     # for eye in eyes:
