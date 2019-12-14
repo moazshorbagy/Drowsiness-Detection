@@ -4,10 +4,6 @@ import skimage.io as io
 from skimage.filters import threshold_otsu
 import time
 
-cap = cv2.VideoCapture(0)
-
-time.sleep(1)
-kernel = np.ones((7, 7), np.uint8)
 
 def dist(p1, p2):
     return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
@@ -31,12 +27,13 @@ def getEyes(img, filter):
                 eyes.append((i * x, i * x + x, j * y, j * y + y))
     return eyes
 
-while True:
-    ret, frame = cap.read()
-    ycbcr = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    hsv=cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-    rgb=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+def Face_detection(frame):
+
+    kernel = np.ones((7, 7), np.uint8)
+    ycbcr = cv2.cvtColor(frame, cv2.COLOR_RGB2YCrCb)
+    gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    hsv=cv2.cvtColor(frame,cv2.COLOR_RGB2HSV)
+    rgb=frame
 
     # Rule A
     red=rgb[:,:,0]
@@ -63,23 +60,26 @@ while True:
     y=ycbcr[:,:,0]
     cr=ycbcr[:,:,1]
     cb=ycbcr[:,:,2]
-    mask3=np.logical_and.reduce((cb>=60,cb<=130,cr>=130,cr<=165))
+    mask3=np.logical_and.reduce((cb>=90,cb<=117,cr>=150,cr<=170))
 
     # final Mask
     mask=np.logical_and.reduce((mask1,mask2,mask3))
+
     gray[np.invert(mask)]=0
     gray[mask]=255
 
 
-    gray = cv2.dilate(gray, kernel, iterations=4)
-    gray = cv2.erode(gray, kernel, iterations=5)
+    erosionkernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
+    dielationkernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(19,19))
 
-    gray = cv2.dilate(gray, kernel, iterations=1)
-    gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel, iterations=4)
+    gray = cv2.dilate(gray, dielationkernel)
+    gray = cv2.erode(gray, erosionkernel)
 
     contours, _ = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    return contours
     #cv2.drawContours(frame, contours, -1, (0,255,0), 1)
 
+def Draw(frame,contours):
     if(len(contours)):
             index = 0
             secondMax = 0
@@ -104,13 +104,4 @@ while True:
             if(dist(meanIndex, meanThird) > w):
                 x3=x;y3=y;w3=w;h3=h
 
-            h = int(3 * (max(max(x+w, x2+w2), x3+w3) - min(min(x, x2), x3)) / 2)
             frame = cv2.rectangle(frame, (min(min(x, x2), x3), min(min(y, y2), y3)), (max(max(x+w, x2+w2), x3+w3), min(min(y, y2), y3) + h), (0, 255, 0), 2)
-
-    cv2.imshow("f", frame)
-
-    k = cv2.waitKey(1)
-    if k == 27:
-        break
-
-cv2.destroyAllWindows()
