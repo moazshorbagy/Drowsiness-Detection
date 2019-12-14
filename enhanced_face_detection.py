@@ -72,8 +72,9 @@ def Face_detection(frame):
     erosionkernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
     dielationkernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(19,19))
 
-    gray = cv2.dilate(gray, dielationkernel)
+    gray = cv2.dilate(gray, dielationkernel,iterations=3)
     gray = cv2.erode(gray, erosionkernel)
+    cv2.imshow("f",gray)
 
     contours, _ = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return contours
