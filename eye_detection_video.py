@@ -12,20 +12,12 @@ se[[0, 1, 2, 4, 5, 6],0] = 0
 se[[0, 1, 2, 4, 5, 6],6] = 0
 se[3, 3] = 0
 
-cap = cv2.VideoCapture(0)
 
 def dist(x1, y1, x2, y2):
     return np.sqrt((x1-x2)**2 + (y1-y2)**2)
 
-while(True):
-    
-    _, frame = cap.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-
-    faces = face_cascade.detectMultiScale(gray, 1.15, 5)
-
+def detect_eyes(faces, frame):
     for (x, y, w, h) in faces:
         roi_color = frame[y : y + h, x : x + w]
 
@@ -41,7 +33,7 @@ while(True):
         c2 = np.power(np.max(Cr) - Cr, 2)
         c2Min = np.min(c2)
         c2 = (c2 - c2Min) / (np.max(c2) - c2Min)
-        
+
         c3 = Cb / Cr
         c3Min = np.min(c3)
         c3 = (c3 - c3Min) / (np.max(c3) - c3Min)
@@ -61,10 +53,13 @@ while(True):
         #EyeMap = cv2.erode(EyeMap, se, iterations = 2)
         EyeMap = cv2.dilate(EyeMap, se, iterations = 2)
         EyeMap = cv2.erode(EyeMap, se, iterations = 2)
+
         EyeMapMin = np.min(EyeMap)
+
         EyeMap = (EyeMap - EyeMapMin) / (np.max(EyeMap) - EyeMapMin)
 
         threshold = 0.7 * np.max(EyeMap) + 0.1
+
         eyeNotFound = True
         for shit in range(2):
             threshold -= 0.1
@@ -85,6 +80,7 @@ while(True):
                         for i2 in range(0, int(EyeMapD.shape[0]/2), 2):
                             if(not eyeNotFound):
                                 break
+
                             for j2 in range(int(EyeMapD.shape[1]/2), EyeMapD.shape[1], 2):
                                 if(not eyeNotFound):
                                     break
@@ -103,15 +99,29 @@ while(True):
         
         roi_color = cv2.rectangle(roi_color, (eye1[1]-15, eye1[0]-15), (eye1[1]+15, eye1[0]+15), (0, 255, 0), 2)
         roi_color = cv2.rectangle(roi_color, (eye2[1]-15, eye2[0]-15), (eye2[1]+15, eye2[0]+15), (0, 255, 0), 2)
-        cv2.imshow('EyeMap', EyeMap)
-        if(eyeNotFound):
-            zeros = np.zeros(roi_color.shape)
-            cv2.imshow('frame', zeros)
-        else:
-            cv2.imshow('frame', roi_color)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        return roi_color
 
-# When everything done, release the capture
-cap.release()
-cv2.destroyAllWindows()
+def test():
+
+    cap = cv2.VideoCapture(0)
+    while(True):
+        
+        _, frame = cap.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+
+        faces = face_cascade.detectMultiScale(gray, 1.15, 5)
+
+        frame = detect_eyes(faces, frame)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        cv2.imshow("frame", frame)
+
+        if cv2.waitKey(1) == 27:
+            break
+
+    # When everything done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
+
+test()
