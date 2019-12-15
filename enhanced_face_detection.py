@@ -60,7 +60,7 @@ def Face_detection(frame):
     y=ycbcr[:,:,0]
     cr=ycbcr[:,:,1]
     cb=ycbcr[:,:,2]
-    mask3=np.logical_and.reduce((cb>=90,cb<=117,cr>=150,cr<=170))
+    mask3=np.logical_and.reduce((cb>=90,cb<=117,cr>=138,cr<=170))
 
     # final Mask
     mask=np.logical_and.reduce((mask1,mask2,mask3))
@@ -74,7 +74,6 @@ def Face_detection(frame):
 
     gray = cv2.dilate(gray, dielationkernel,iterations=5)
     gray = cv2.erode(gray, erosionkernel)
-    cv2.imshow("f",gray)
 
     contours, _ = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return contours
@@ -105,4 +104,12 @@ def Draw(frame,contours):
             if(dist(meanIndex, meanThird) > w):
                 x3=x;y3=y;w3=w;h3=h
 
-            frame = cv2.rectangle(frame, (min(min(x, x2), x3), min(min(y, y2), y3)), (max(max(x+w, x2+w2), x3+w3), min(min(y, y2), y3) + h), (0, 255, 0), 2)
+            h = int(3 * (max(max(x+w, x2+w2), x3+w3) - min(min(x, x2), x3)) / 2)
+            p1_x = min(min(x, x2), x3)
+            p1_y = min(min(y, y2), y3)
+            p2_x = max(max(x+w, x2+w2), x3+w3)
+            p2_y = min(min(y, y2), y3) + h
+            face=frame[p1_y:p2_y+1,p1_x:p2_x+1,:]
+            gray=cv2.cvtColor(face,cv2.COLOR_RGB2GRAY)
+            cv2.imshow("f",gray)
+            frame = cv2.rectangle(frame, (p1_x, p1_y), (p2_x, p2_y), (0, 255, 0), 2)
