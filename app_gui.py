@@ -4,6 +4,7 @@ import PIL.Image, PIL.ImageTk
 import time
 from enhanced_face_detection import Face_detection,Draw
 from tkinter import filedialog
+from eye_detection import detect_eyes
 
 class App:
     def __init__(self, window, window_title, video_source=0):
@@ -12,6 +13,7 @@ class App:
         self.monitoringStarted = False
         self.video_source = video_source
         self.vid = None
+        self.perclos = 0
 
         self.window.resizable(0,0)
 
@@ -95,6 +97,18 @@ class App:
         self.defaultBrightnessBtn.pack_forget()
         self.defaultBrightnessBtn.destroy()
 
+    def process(self, frame):
+        contours = Face_detection(frame)
+        X, Y, W, H = Draw(frame,contours)
+        try:
+            if X is not None and Y is not None and W is not None and H is not None:
+                self.perclos = detect_eyes((X, Y, W, H), frame, self.perclos)
+            if self.perclos >= 10:
+                print('[ALERT] detected close eye')  
+                self.perclos = 0          
+        except ValueError:  #raised if `y` is empty.
+            pass
+
 
     def update(self):
         if self.vid == None or not self.monitoringStarted:
@@ -102,9 +116,8 @@ class App:
         ret, frame = self.vid.get_frame()
         if ret:
             frame = cv2.resize(frame, (640, 480))
-            contours=Face_detection(frame)
-            Draw(frame,contours)
             frame = self.set_brightness(frame, self.brightnessLevel)
+            self.process(frame)
             image = PIL.Image.fromarray(frame)
             self.photo = PIL.ImageTk.PhotoImage(image=image)
             self.vid_canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
