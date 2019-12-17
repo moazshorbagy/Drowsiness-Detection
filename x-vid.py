@@ -3,11 +3,12 @@ import cv2
 import numpy as np
 from skimage.color import rgb2ycbcr
 from skimage.morphology.selem import disk
-# from commonfunctions import *
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 clahe = cv2.createCLAHE(clipLimit=3.0)
 
 se = disk(5)
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
 
 cap = cv2.VideoCapture(0)
 
@@ -53,18 +54,18 @@ while(True):
         EyeMapL = dilated / eroded
         EyeMapLMin = np.min(EyeMapL)
         EyeMapL = (EyeMapL - EyeMapLMin) / (np.max(EyeMapL) - EyeMapLMin)
-        cv2.imshow('EyeMapL', EyeMapL)
         
         EyeMap = EyeMapC * EyeMapL
         EyeMap = cv2.erode(EyeMap, se, iterations = 2)
-        EyeMap = clahe.apply((EyeMap*255).astype(np.uint8))/255
         EyeMap = cv2.dilate(EyeMap, se, iterations = 2)
         EyeMap = cv2.erode(EyeMap, se, iterations = 2)
+        EyeMapMin = np.min(EyeMap)
+        EyeMap = (EyeMap - EyeMapMin) / (np.max(EyeMap) - EyeMapMin)
 
-        threshold = 0.85 * np.max(EyeMap) + 0.8
+        threshold = 0.7 * np.max(EyeMap) + 0.1
         eyeNotFound = True
-        for shit in range(1):
-            threshold -= 0.8
+        for i in range(1):
+            threshold -= 0.1
             EyeMapD = EyeMap.copy()
             EyeMapD[EyeMapD >= threshold] = 1
             EyeMapD[EyeMapD < threshold] = 0
@@ -72,6 +73,7 @@ while(True):
             center = ((int)(EyeMapD.shape[0]/2), (int)(EyeMapD.shape[1]/2))
             eye1 = (0, 0)
             eye2 = (0, 0)
+            
             r1 = range(30, int(EyeMapD.shape[0]/2))
             r2 = range(30, int(EyeMapD.shape[1]/2))
             r4 = range(int(EyeMapD.shape[1]/2), EyeMapD.shape[1])
