@@ -9,4 +9,4 @@ A python project that can detect drowsiness/sleep in real-time for drivers' safe
 
 For webcam:
 
-`$ python3 ./stream_video.py`
+`$ python3 ./app_gui.py`
