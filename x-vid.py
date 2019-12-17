@@ -3,13 +3,12 @@ import cv2
 import numpy as np
 from skimage.color import rgb2ycbcr
 from skimage.morphology.selem import disk
-from commonfunctions import *
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+clahe = cv2.createCLAHE(clipLimit=3.0)
 
 se = disk(5)
-se[2, 3] = 0
-se[3, [2, 3, 4]] = 0
-se[4, 3] = 0
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
 
 cap = cv2.VideoCapture(0)
 
@@ -27,6 +26,7 @@ while(True):
 
     for (x, y, w, h) in faces:
         roi_color = frame[y : y + h, x : x + w]
+        roi_gray = gray[y : y + h, x : x + w]
 
         face_ycbcr = rgb2ycbcr(roi_color)
         Y = face_ycbcr[:,:,0]
@@ -46,8 +46,7 @@ while(True):
         c3 = (c3 - c3Min) / (np.max(c3) - c3Min)
         
         EyeMapC = ((c1 + c2 + c3)/3)
-        EyeMapCMin = np.min(EyeMapC)
-        EyeMapC = (EyeMapC - EyeMapCMin) / (np.max(EyeMapC) - EyeMapCMin)
+        EyeMapC = clahe.apply((EyeMapC*255).astype(np.uint8))/255
 
         dilated = cv2.dilate(Y, se)
         eroded = cv2.erode(Y, se)
@@ -65,7 +64,7 @@ while(True):
 
         threshold = 0.7 * np.max(EyeMap) + 0.1
         eyeNotFound = True
-        for shit in range(1):
+        for i in range(1):
             threshold -= 0.1
             EyeMapD = EyeMap.copy()
             EyeMapD[EyeMapD >= threshold] = 1
@@ -74,19 +73,21 @@ while(True):
             center = ((int)(EyeMapD.shape[0]/2), (int)(EyeMapD.shape[1]/2))
             eye1 = (0, 0)
             eye2 = (0, 0)
-            for i1 in range(0, int(EyeMapD.shape[0]/2), 1):
+            
+            r1 = range(30, int(EyeMapD.shape[0]/2))
+            r2 = range(30, int(EyeMapD.shape[1]/2))
+            r4 = range(int(EyeMapD.shape[1]/2), EyeMapD.shape[1])
+            for i1 in r1:
                 if(not eyeNotFound):
                     break
-                for j1 in range(0, int(EyeMapD.shape[1]/2), 1):
+                for j1 in r2:
                     if(not eyeNotFound):
                         break
                     if(EyeMapD[i1, j1] == 1):
-                        for i2 in range(0, int(EyeMapD.shape[0]/2), 1):
+                        for i2 in r1:
                             if(not eyeNotFound):
                                 break
                             for j2 in range(int(EyeMapD.shape[1]/2), EyeMapD.shape[1], 1):
-                                if(not eyeNotFound):
-                                    break
                                 if(EyeMapD[i2, j2] == 1 and not (i1 == i2 and j1 == j2)):
                                     distCandidate1 = dist(i1, j1, center[0], center[1])
                                     distCandidate2 = dist(i2, j2, center[0], center[1])
@@ -97,6 +98,7 @@ while(True):
                                                 eye1 = (i1, j1)
                                                 eye2 = (i2, j2)
                                                 eyeNotFound = False
+                                                break
             if(not eyeNotFound):
                 break
         
