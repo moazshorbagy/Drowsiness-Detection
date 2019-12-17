@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from skimage.color import rgb2ycbcr, rgb2gray, rgb2hsv, hsv2rgb
 from skimage.exposure import adjust_gamma, is_low_contrast, rescale_intensity
+
 from skimage.morphology.selem import disk
 from commonfunctions import *
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -90,6 +91,7 @@ for (x, y, w, h) in faces:
                                         eye1 = (i1, j1)
                                         eye2 = (i2, j2)
                                         eyeNotFound = False
+
 
     roi_color = cv2.rectangle(roi_color, (eye1[1]-15, eye1[0]-15), (eye1[1]+15, eye1[0]+15), (0, 255, 0), 2)
     roi_color = cv2.rectangle(roi_color, (eye2[1]-15, eye2[0]-15), (eye2[1]+15, eye2[0]+15), (0, 255, 0), 2)
