@@ -3,17 +3,18 @@ import cv2
 import numpy as np
 from skimage.color import rgb2ycbcr, rgb2gray, rgb2hsv, hsv2rgb
 from skimage.exposure import adjust_gamma, is_low_contrast, rescale_intensity
+
+from skimage.morphology.selem import disk
 from commonfunctions import *
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-se = np.ones((7,7), np.uint8)
-se[0,[0, 1, 2, 4, 5, 6]] = 0
-se[6,[0, 1, 2, 4, 5, 6]] = 0
-se[[0, 1, 2, 4, 5, 6],0] = 0
-se[[0, 1, 2, 4, 5, 6],6] = 0
-se[3, 3] = 0
+se = disk(5)
+se[4, 5] = 0
+se[5, [4, 5, 6]] = 0
+se[6, 5] = 0
+print(se)
 
-frame = io.imread('index.jpeg')
+frame = io.imread('moaz.png')
 
 # Our operations on the frame come here
 gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
@@ -53,9 +54,11 @@ for (x, y, w, h) in faces:
     dilated = cv2.dilate(Y, se)
     eroded = cv2.erode(Y, se)
 
-    EyeMapL = dilated / eroded
+    EyeMapL = dilated / (eroded)
+    show_images([EyeMapL], ['EyeMapL'])
     EyeMapLMin = np.min(EyeMapL)
     EyeMapL = (EyeMapL - EyeMapLMin) / (np.max(EyeMapL) - EyeMapLMin)
+
     
     EyeMap = EyeMapC * EyeMapL
     EyeMap = cv2.erode(EyeMap, se, iterations = 2)
@@ -89,10 +92,8 @@ for (x, y, w, h) in faces:
                                         eye2 = (i2, j2)
                                         eyeNotFound = False
 
-    print(eye1)
-    print(eye2)
+
     roi_color = cv2.rectangle(roi_color, (eye1[1]-15, eye1[0]-15), (eye1[1]+15, eye1[0]+15), (0, 255, 0), 2)
     roi_color = cv2.rectangle(roi_color, (eye2[1]-15, eye2[0]-15), (eye2[1]+15, eye2[0]+15), (0, 255, 0), 2)
 
     show_images([roi_color, c1, c2, c3, EyeMapC, EyeMapL, EyeMap, EyeMapD], ['Face', 'c1', 'c2', 'c3', 'EyeMapC', 'EyeMapL', 'EyeMap', 'EyeMapD'])
-    show_images([roi_color], ['Eye Detection'])

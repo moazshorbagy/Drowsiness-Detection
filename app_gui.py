@@ -2,7 +2,9 @@ import tkinter
 import cv2
 import PIL.Image, PIL.ImageTk
 import time
+from enhanced_face_detection import Face_detection,Draw
 from tkinter import filedialog
+from eye_detection import detect_eyes
 
 class App:
     def __init__(self, window, window_title, video_source=0):
@@ -11,6 +13,7 @@ class App:
         self.monitoringStarted = False
         self.video_source = video_source
         self.vid = None
+        self.perclos = 0
 
         self.window.resizable(0,0)
 
@@ -41,7 +44,7 @@ class App:
 
     def setVideoSourceTo0(self):
         self.video_source = 0
-    
+
     def startApp(self):
         self.window.mainloop()
 
@@ -51,7 +54,7 @@ class App:
 
     def endStream(self):
         if self.monitoringStarted:
-           self.btn.configure(text="Start monitoring", command=self.startStream) 
+           self.btn.configure(text="Start monitoring", command=self.startStream)
            self.vid_canvas.pack_forget()
            self.vid.vid.release()
            self.vid_canvas.destroy()
@@ -68,7 +71,7 @@ class App:
             self.btn.configure(text="Stop monitoring", command=self.endStream)
             self.monitoringStarted = True
             self.delay = 24
-            self.update()   
+            self.update()
 
     def addToolBar(self):
         self.toolBarLabel = tkinter.Label(self.window, text="Toolbar",  font=("Times 14", 14, "bold"), bg="white")
@@ -94,19 +97,32 @@ class App:
         self.defaultBrightnessBtn.pack_forget()
         self.defaultBrightnessBtn.destroy()
 
+    def process(self, frame):
+        contours = Face_detection(frame)
+        X, Y, W, H = Draw(frame,contours)
+        try:
+            if X is not None and Y is not None and W is not None and H is not None:
+                self.perclos = detect_eyes((X, Y, W, H), frame, self.perclos)
+            if self.perclos >= 10:
+                print('[ALERT] detected close eye')  
+                self.perclos = 0          
+        except ValueError:  #raised if `y` is empty.
+            pass
+
 
     def update(self):
         if self.vid == None or not self.monitoringStarted:
             return
         ret, frame = self.vid.get_frame()
         if ret:
-            frame = cv2.resize(frame, (640, 480))               
+            frame = cv2.resize(frame, (640, 480))
             frame = self.set_brightness(frame, self.brightnessLevel)
+            self.process(frame)
             image = PIL.Image.fromarray(frame)
             self.photo = PIL.ImageTk.PhotoImage(image=image)
             self.vid_canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
             self.window.after(self.delay, self.update)
-    
+
     def set_brightness(self, img, value=30):
         hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
         h, s, v = cv2.split(hsv)
@@ -123,13 +139,13 @@ class App:
         final_hsv = cv2.merge((h, s, v))
         img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2RGB)
         return img
-    
+
     def setIncreaseBrightness(self):
         self.brightnessLevel = self.brightnessLevel + 20
-        
+
     def setDecreaseBrightness(self):
         self.brightnessLevel = self.brightnessLevel - 20
-    
+
     def setDefaultBrightness(self):
         self.brightnessLevel = 0
 

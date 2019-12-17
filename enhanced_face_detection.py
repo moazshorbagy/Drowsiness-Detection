@@ -7,14 +7,32 @@ import time
 def dist(p1, p2):
     return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
+def getEyes(img, filter):
+    x = filter.shape[0]
+    y = filter.shape[1]
 
-def detect_face(frame):
+    height = img.shape[0]
+    width = img.shape[1]
+
+    eyes = []
+
+    for i in range(height):
+        for j in range(width):
+            if i * x + x > height or j * y + y > width:
+                break
+            roi = img[i * x : i * x + x, j * y : j * y + y]
+            difference = np.sum(np.subtract(roi, filter)/255).astype(int)
+            if difference < 1:
+                eyes.append((i * x, i * x + x, j * y, j * y + y))
+    return eyes
+
+def Face_detection(frame):
+
+    kernel = np.ones((7, 7), np.uint8)
     ycbcr = cv2.cvtColor(frame, cv2.COLOR_RGB2YCrCb)
     gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     hsv=cv2.cvtColor(frame,cv2.COLOR_RGB2HSV)
-    rgb= frame.copy()
-
-    kernel = np.ones((7, 7), np.uint8)
+    rgb=frame
 
     # Rule A
     red=rgb[:,:,0]
@@ -41,25 +59,27 @@ def detect_face(frame):
     y=ycbcr[:,:,0]
     cr=ycbcr[:,:,1]
     cb=ycbcr[:,:,2]
-    mask3=np.logical_and.reduce((cb>=60,cb<=130,cr>=130,cr<=165))
+
+    mask3=np.logical_and.reduce((cb>=90,cb<=117,cr>=138,cr<=170))
 
     # final Mask
     mask=np.logical_and.reduce((mask1,mask2,mask3))
+
     gray[np.invert(mask)]=0
     gray[mask]=255
 
 
-    gray = cv2.dilate(gray, kernel, iterations=4)
-    gray = cv2.erode(gray, kernel, iterations=5)
+    erosionkernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
+    dielationkernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(13,13))
 
-    gray = cv2.dilate(gray, kernel, iterations=1)
-    gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel, iterations=3)
+    gray = cv2.dilate(gray, dielationkernel,iterations=5)
+    gray = cv2.erode(gray, erosionkernel)
 
     contours, _ = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    return contours
     #cv2.drawContours(frame, contours, -1, (0,255,0), 1)
 
-    X, Y, W, H = 0, 0, 0, 0
-
+def Draw(frame,contours):
     if(len(contours)):
             index = 0
             secondMax = 0
@@ -85,48 +105,14 @@ def detect_face(frame):
                 x3=x;y3=y;w3=w;h3=h
 
             h = int(3 * (max(max(x+w, x2+w2), x3+w3) - min(min(x, x2), x3)) / 2)
-            frame = cv2.rectangle(frame, (min(min(x, x2), x3), min(min(y, y2), y3)), (max(max(x+w, x2+w2), x3+w3), min(min(y, y2), y3) + h), (0, 255, 0), 2)
-            X, Y = min(min(x, x2), x3), min(min(y, y2), y3)
-            W, H = max(max(x+w, x2+w2), x3+w3), min(min(y, y2), y3) + h
-            return X, Y, W, H
 
-
-def getEyes(img, filter):
-    x = filter.shape[0]
-    y = filter.shape[1]
-
-    height = img.shape[0]
-    width = img.shape[1]
-
-    eyes = []
-
-    for i in range(height):
-        for j in range(width):
-            if i * x + x > height or j * y + y > width:
-                break
-            roi = img[i * x : i * x + x, j * y : j * y + y]
-            difference = np.sum(np.subtract(roi, filter)/255).astype(int)
-            if difference < 1:
-                eyes.append((i * x, i * x + x, j * y, j * y + y))
-    return eyes
-
-
-def test():
-
-    cap = cv2.VideoCapture(0)
-    time.sleep(1)
-
-    while True:
-        ret, frame = cap.read()
-        detect_face(frame)
-    
-        cv2.imshow("f", frame)
-
-        k = cv2.waitKey(1)
-        if k == 27:
-            break
-
-    cv2.destroyAllWindows()
-
-
-# test()
+            p1_x = min(min(x, x2), x3)
+            p1_y = min(min(y, y2), y3)
+            p2_x = max(max(x+w, x2+w2), x3+w3)
+            p2_y = min(min(y, y2), y3) + h
+            face=frame[p1_y:p2_y+1,p1_x:p2_x+1,:]
+            gray=cv2.cvtColor(face,cv2.COLOR_RGB2GRAY)
+            cv2.imshow("f",gray)
+            frame = cv2.rectangle(frame, (p1_x, p1_y), (p2_x, p2_y), (0, 0, 255), 2)
+            return p1_x, p1_y, p2_x, p2_y
+    return None, None, None, None
