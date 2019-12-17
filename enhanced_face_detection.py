@@ -4,6 +4,8 @@ import skimage.io as io
 from skimage.filters import threshold_otsu
 import time
 
+
+
 def dist(p1, p2):
     return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
@@ -59,7 +61,6 @@ def Face_detection(frame):
     y=ycbcr[:,:,0]
     cr=ycbcr[:,:,1]
     cb=ycbcr[:,:,2]
-
     mask3=np.logical_and.reduce((cb>=90,cb<=117,cr>=138,cr<=170))
 
     # final Mask
@@ -105,7 +106,6 @@ def Draw(frame,contours):
                 x3=x;y3=y;w3=w;h3=h
 
             h = int(3 * (max(max(x+w, x2+w2), x3+w3) - min(min(x, x2), x3)) / 2)
-
             p1_x = min(min(x, x2), x3)
             p1_y = min(min(y, y2), y3)
             p2_x = max(max(x+w, x2+w2), x3+w3)
